@@ -1,0 +1,169 @@
+---
+title: "Strawberries Assignment"
+author: "Jin Wen Lin"
+format: pdf
+editor: visual
+---
+
+```{r}
+#| label: load libraries and set options
+#| warning: false
+#| message: false
+#| 
+
+library(knitr)  
+library(kableExtra)
+library(tidyverse)
+library(stringr)
+library(tidyverse)
+```
+
+First, read the data and see the overall summary.
+
+```{r}
+#| label: read data - glimpse 
+
+strawberry <- read_csv("strawberries25_v3.csv")
+
+glimpse(strawberry)
+```
+
+```{r}
+#|label: function def - drop 1-item columns (code from lecture)
+
+drop_one_value_col <- function(df){   ## takes whole dataframe
+drop <- NULL  
+
+## test each column for a single value
+for(i in 1:dim(df)[2]){     
+if((df |> distinct(df[,i]) |> count()) == 1){
+drop = c(drop, i)
+} }
+
+## report the result -- names of columns dropped
+## consider using the column content for labels 
+## or headers 
+
+if(is.null(drop)){return("none")}else{
+
+   print("Columns dropped:")
+   print(colnames(df)[drop])
+   strawberry <- df[, -1*drop]
+   }
+}
+
+
+## drop the columns with NAs
+
+strawberry <- drop_one_value_col(strawberry)
+
+```
+
+Separate the data item column into columns of strawberries, Measure, and Bearing type.
+
+```{r}
+#| label: Census Data
+# strawberry census
+strawberry_cens<- strawberry %>% filter(Program == "CENSUS")
+data_item <- strawberry_cens %>% distinct(`Data Item`)
+data_item
+
+## Separate the Data Item column
+strawberry_cens <- strawberry_cens %>% 
+  separate_wider_delim(  cols = `Data Item`,
+                         delim = " - ",
+                         names = c("strawberries",
+                                 "Category"),
+                         too_many = "error",
+                         too_few = "align_start"
+                       )
+
+strawberry_cens <- strawberry_cens %>% 
+  separate_wider_delim(  cols = `Category`,
+                         delim = " ",
+                         names = c("Measure",
+                                 "Bearing_type"),
+                         too_many = "merge",
+                         too_few = "align_start"
+                       )
+# remove commas in the Measure Column
+strawberry_cens <- strawberry_cens %>% 
+  mutate(Measure = gsub("\\,", "", Measure))
+
+# organic census data
+organic_cens <- strawberry_cens %>% filter(str_detect(strawberries, "ORGANIC")==TRUE)
+
+# non-organic census data
+non_organic_cens <- strawberry_cens %>% filter(str_detect(strawberries, "ORGANIC")==FALSE)
+
+
+```
+
+Separate the Domain Category column into three new columns with chemical name, chemical type, and chemical code.
+
+```{r}
+#|label: Strawberry Survey Data
+
+strawberry_survey <- strawberry %>% filter(Program == "SURVEY")
+strawberry_survey %>% distinct(strawberry_survey$`Domain Category`)
+# remove CHEMICAL in the Domain Category
+strawberry_survey <- strawberry_survey %>% 
+  mutate(`Domain Category` = gsub("CHEMICAL, ", "", `Domain Category`))
+# separate them into chemical name, chemical type, and chemical code
+strawberry_survey <- strawberry_survey %>% 
+  separate_wider_delim(  cols = `Domain Category`,
+                         delim = ": ",
+                         names = c("Type",
+                                 "Others"),
+                         too_many = "error",
+                         too_few = "align_start"
+                       )
+
+strawberry_survey <- strawberry_survey %>% 
+  separate_wider_delim(  cols = Others,
+                         delim = " = ",
+                         names = c("Name",
+                                 "Chemical Code"),
+                         too_many = "error",
+                         too_few = "align_start"
+                       )
+# remove brackets
+strawberry_survey <- strawberry_survey %>% 
+  mutate(Type = gsub("\\)", "", Type))
+
+strawberry_survey <- strawberry_survey %>% 
+  mutate(Type = gsub("\\(", "", Type))
+
+strawberry_survey <- strawberry_survey %>% 
+  mutate(`Chemical Code` = gsub("\\)", "", `Chemical Code`))
+
+
+
+```
+
+```{r}
+#|label: Check the Value Column
+
+# organic census data Value
+value_1 <- organic_cens %>% distinct(Value)
+value_1
+# change Value into numbers
+organic_cens$Value <- as.numeric(gsub(",", "", organic_cens$Value))
+
+# non-organic census data Value
+value_2 <- non_organic_cens %>% distinct(Value)
+value_2
+# change Value into numbers
+non_organic_cens$Value <- as.numeric(gsub(",", "", non_organic_cens$Value))
+
+# survey data
+# change Value into numbers
+strawberry_survey$Value <- as.numeric(gsub(",", "", strawberry_survey$Value))
+```
+
+While turning the value column into numbers or doubles instead of characters, there are some values automatically turned into NA such as notations like (D) and (Z) etc. The different notations do have different meanings behind them but now they are all in NAs.
+
+```{r}
+# write the survey data into csv
+write.csv(strawberry_survey, "strawberry_survey.csv", row.names = FALSE)
+```

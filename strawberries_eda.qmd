@@ -30,8 +30,6 @@ library(magrittr)
 ```{r}
 # load data (survey data filtered from part 1)
 straw_sur <- read.csv("strawberry_survey.csv")
-colnames(straw_sur)[colnames(straw_sur) == "Chemical.Name"] <- "Type"
-colnames(straw_sur)[colnames(straw_sur) == "Chemical.Type"] <- "Name"
 glimpse(straw_sur)
 ```
 
@@ -694,7 +692,7 @@ fl_num_f
 
 ### Visualization of The Above Summaries
 
-Here is the visulation based on the information from the above summaries.
+Here is the visualization based on the information from the above summaries.
 
 ```{r}
 # recreate a dataset that contains the summaries above
@@ -797,4 +795,6 @@ After going to the PubChem website, it is found that phosphate is not classified
 
 [pubChem](https://pubchem.ncbi.nlm.nih.gov/)
 
-[Potash](https://www.thecanadianencyclopedia.ca/en/article/potash#:\~:text=Global%20and%20Environmental%20Impacts,-Because%20potassium%20(the&text=The%20environmental%20impact%20of%20potash,volume%20water%20consumption%20and%20contamination.)
+
+[potash](https://www.thecanadianencyclopedia.ca/en/article/potash#:\~:text=Global%20and%20Environmental%20Impacts,-Because%20potassium%20(the&text=The%20environmental%20impact%20of%20potash,volume%20water%20consumption%20and%20contamination.)
+
